@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Folder Include="Interfaces\" />
+    <Folder Include="Authentication\" />
     <Folder Include="Services\" />
   </ItemGroup>
 

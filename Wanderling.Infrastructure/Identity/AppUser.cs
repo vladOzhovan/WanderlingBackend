@@ -2,10 +2,10 @@
 
 namespace Wanderling.Infrastructure.Identity
 {
-    public class AppUser : IdentityUser<Guid>
+    public class AppUser : IdentityUser
     {
-        public string FirstName { get; set; } = string.Empty;
-        public string SecondName { get; set; } = string.Empty;
+        public string? FirstName { get; set; }
+        public string? SecondName { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 }

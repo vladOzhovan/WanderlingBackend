@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Wanderling.Infrastructure.Data;
 using Wanderling.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Security.Claims;
 
 
 namespace Wanderling.Api.DI
@@ -29,7 +30,7 @@ namespace Wanderling.Api.DI
                 options.Password.RequireUppercase = false;
                 options.Password.RequireNonAlphanumeric = false;
             })
-             .AddRoles<AppRole>()
+             .AddRoles<IdentityRole>()
              .AddEntityFrameworkStores<WanderlingDbContext>()
              .AddDefaultTokenProviders();
 
@@ -49,7 +50,7 @@ namespace Wanderling.Api.DI
                      ValidIssuer = configuration["Jwt:Issuer"],
                      ValidAudience = configuration["Jwt:Audience"],
                      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"])),
-                     RoleClaimType = System.Security.Claims.ClaimTypes.Role
+                     RoleClaimType = ClaimTypes.Role
                  };
              });
 

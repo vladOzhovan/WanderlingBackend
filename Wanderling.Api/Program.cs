@@ -1,7 +1,5 @@
-
-using Microsoft.EntityFrameworkCore;
 using Wanderling.Api.DI;
-using Wanderling.Infrastructure.Data;
+using Wanderling.Api.Middlewares;
 
 namespace Wanderling.Api
 {
@@ -16,6 +14,8 @@ namespace Wanderling.Api
 
             var app = builder.Build();
 
+            app.UseGlobalExceptionHandling();
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -24,6 +24,7 @@ namespace Wanderling.Api
             }
 
             app.UseHttpsRedirection();
+            app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
             app.Run();

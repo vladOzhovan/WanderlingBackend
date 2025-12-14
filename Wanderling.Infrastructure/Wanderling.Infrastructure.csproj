@@ -24,4 +24,8 @@
     <ProjectReference Include="..\Wanderling.Application\Wanderling.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Entities\" />
+  </ItemGroup>
+
 </Project>

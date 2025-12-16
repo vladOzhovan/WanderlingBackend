@@ -7,10 +7,7 @@ namespace Wanderling.Infrastructure.Data
 {
     public class WanderlingDbContext : IdentityDbContext<AppUser>
     {
-        public WanderlingDbContext(DbContextOptions<WanderlingDbContext> options) : base(options)
-        {
-            
-        }
+        public WanderlingDbContext(DbContextOptions<WanderlingDbContext> options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

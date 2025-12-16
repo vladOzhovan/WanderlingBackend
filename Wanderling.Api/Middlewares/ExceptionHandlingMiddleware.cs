@@ -18,15 +18,13 @@ namespace Wanderling.Api.Middlewares
         {
             try
             {
-                // Call the next middleware in the pipeline
-                await _next(context);
+                await _next(context); // Call the next middleware in the pipeline
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled exeption occured while processing request");
                 
-                // Handle the error and return a proper response
-                await HandleExeptionAsync(context, ex);
+                await HandleExeptionAsync(context, ex); // Handle the error and return a proper response
             }
         }
 
@@ -39,8 +37,7 @@ namespace Wanderling.Api.Middlewares
             {
                 StatusCode = context.Response.StatusCode,
                 Error = "Internal server error",
-                // for development only DO NOT expose full exception in production
-                Details = exception.Message
+                Details = exception.Message // for development only DO NOT expose full exception in production
             };
 
             var json = JsonSerializer.Serialize(response);

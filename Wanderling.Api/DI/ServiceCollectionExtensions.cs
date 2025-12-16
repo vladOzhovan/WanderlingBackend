@@ -1,11 +1,14 @@
-﻿using System.Text;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
+using Wanderling.Application.Interfaces;
 using Wanderling.Infrastructure.Data;
 using Wanderling.Infrastructure.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Security.Claims;
+using Wanderling.Infrastructure.Options;
+using Wanderling.Infrastructure.Services;
 
 
 namespace Wanderling.Api.DI
@@ -53,6 +56,10 @@ namespace Wanderling.Api.DI
                      RoleClaimType = ClaimTypes.Role
                  };
              });
+
+            services.AddScoped<IUserAccauntService, UserAccauntService>();
+            services.AddScoped<ITokenService, TokenService>();
+            services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
 
             services.AddAuthorization();
             services.AddControllers();

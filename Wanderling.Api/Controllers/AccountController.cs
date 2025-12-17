@@ -22,9 +22,24 @@ namespace Wanderling.Api.Controllers
             var result = await _userAccountService.RegisterUserAsync(dto, ct);
 
             if (!result.Succeeded)
-                return BadRequest(new { errors = result.Errors});
+                return BadRequest(result);
 
-            return Ok(result.Data);
+            _logger.LogInformation("User registred. UserId={UserId}. TraceId={TraceId}", result?.Data?.UserId, HttpContext.TraceIdentifier);
+
+            return StatusCode(StatusCodes.Status201Created, result);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto dto, CancellationToken ct = default)
+        {
+            var result = await _userAccountService.LoginAsync(dto, ct);
+
+            if (!result.Succeeded)
+                return BadRequest(result);
+
+            _logger.LogInformation("User logged in. UserId={UserId}. TraceId={TraceId}", result?.Data?.UserId, HttpContext.TraceIdentifier);
+
+            return Ok(result);
         }
     }
 }

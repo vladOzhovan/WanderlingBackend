@@ -26,14 +26,14 @@ namespace Wanderling.Infrastructure.Services
             _tokenService = tokenService;
         }
 
-        public async Task<AuthenticationResult> RegisterUserAsync(RegisterDto regDto, CancellationToken ct = default)
+        public async Task<Result<RegistrationDto>> RegisterUserAsync(RegisterDto regDto, CancellationToken ct = default)
         {
             // Check DTO
             if (regDto is null 
                 || string.IsNullOrWhiteSpace(regDto.Username)
                 || string.IsNullOrWhiteSpace(regDto.Email)
                 || string.IsNullOrWhiteSpace(regDto.Password))
-                return AuthenticationResult.Fail("Invalid payload");
+                return Result<RegistrationDto>.Fail(new Error(ErrorCodes.InvalidPayload, "Invalid payload"));
 
             var username = regDto.Username.Trim();
             var email = regDto.Email.Trim();
@@ -42,18 +42,19 @@ namespace Wanderling.Infrastructure.Services
             // Check email
             var existingByEmail = await _userManager.FindByEmailAsync(email);
             if (existingByEmail is not null)
-                return AuthenticationResult.Fail("User with this email already exists");
+                return Result<RegistrationDto>.Fail(new Error(ErrorCodes.DuplicateEmail, "User with this email already exists"));
 
             // Check username
             var existingByName = await _userManager.FindByNameAsync(username);
             if (existingByName is not null)
-                return AuthenticationResult.Fail("Username is already taken");
+                return Result<RegistrationDto>.Fail(new Error(ErrorCodes.DuplicateUsername, "Username is already taken"));
 
             // Create a new User
             var newUser = new AppUser
             {
                 UserName = username,
                 Email = email,
+                CreatedAt = DateTime.UtcNow
             };
 
             // Try to create a new User
@@ -61,23 +62,40 @@ namespace Wanderling.Infrastructure.Services
             if (!userResult.Succeeded)
             {
                 var errorDescriptions = string.Join("; ", userResult.Errors.Select(e => e.Description));
-                _logger.LogWarning("Failed to create user {Email}: {Errors}", email, errorDescriptions);
-                return AuthenticationResult.Fail($"Failed to create user {email}: {errorDescriptions}");
+                _logger.LogWarning("Failed to create user. Email={Email}: Errors={Errors}", email, errorDescriptions);
+                return Result<RegistrationDto>.Fail(new Error(ErrorCodes.IdentityCreateFailed, errorDescriptions));
             }
 
             // Try to assign a role
-            var roleResult = await _userManager.AddToRoleAsync(newUser, "Player");
+            var roleResult = await _userManager.AddToRoleAsync(newUser, DEFAULT_ROLE);
+            if (!roleResult.Succeeded)
+            {
+                var errorDescriptions = string.Join("; ", roleResult.Errors.Select(e => e.Description));
+                _logger.LogWarning("Failed to add role {Role} to user {Email}: {Errors}", DEFAULT_ROLE, email, errorDescriptions);
+                await _userManager.DeleteAsync(newUser);
+                return Result<RegistrationDto>.Fail(new Error(ErrorCodes.RoleAssignFailed, errorDescriptions));
+            }
 
-            return await AuthenticateUserAsync(newUser, ct);
+            var roles = await _userManager.GetRolesAsync(newUser);
+
+            var dto = new RegistrationDto
+            {
+                UserId = newUser.Id,
+                Username = newUser.UserName ?? string.Empty,
+                Email = newUser.Email ?? string.Empty,
+                Roles = roles.ToArray()
+            };
+
+            return Result<RegistrationDto>.Ok(dto);
         }
 
-        public async Task<AuthenticationResult> LoginAsync(LoginDto loginDto, CancellationToken ct = default)
+        public async Task<Result<AuthenticationDto>> LoginAsync(LoginDto loginDto, CancellationToken ct = default)
         {
             // Check DTO
             if (loginDto is null
                 || string.IsNullOrWhiteSpace(loginDto.Email)
                 || string.IsNullOrWhiteSpace(loginDto.Password))
-                return AuthenticationResult.Fail("Invalid payload");
+                return Result<AuthenticationDto>.Fail(new Error(ErrorCodes.InvalidPayload, "Invalid payload"));
 
             var email = loginDto.Email.Trim();
             var password = loginDto.Password;
@@ -86,25 +104,20 @@ namespace Wanderling.Infrastructure.Services
             var user = await _userManager.FindByEmailAsync(email);
 
             if (user is null)
-            {
-                return AuthenticationResult.Fail("Invalid email or password");
-            }
+                return Result<AuthenticationDto>.Fail(new Error(ErrorCodes.InvalidCredentials, "Invalid email or password"));
 
             var passwordResult = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: false);
 
             if (!passwordResult.Succeeded)
-            {
-                _logger.LogWarning("Invalid password for {Email}", email);
-                return AuthenticationResult.Fail("Invalid email or password");
-            }
+                return Result<AuthenticationDto>.Fail(new Error(ErrorCodes.InvalidCredentials, "Invalid email or password"));
 
             return await AuthenticateUserAsync(user, ct);
         }
 
-        private async Task<AuthenticationResult> AuthenticateUserAsync(AppUser user, CancellationToken ct = default)
+        private async Task<Result<AuthenticationDto>> AuthenticateUserAsync(AppUser user, CancellationToken ct = default)
         {
             if (user is null)
-                return AuthenticationResult.Fail("Invalid user");
+                return Result<AuthenticationDto>.Fail(new Error(ErrorCodes.InvalidCredentials, "Invalid user"));
 
             ct.ThrowIfCancellationRequested();
 
@@ -123,7 +136,7 @@ namespace Wanderling.Infrastructure.Services
                         user.Id,
                         string.Join("; ", errors)
                     );
-                    return AuthenticationResult.Fail("Invalid user role");
+                    return Result<AuthenticationDto>.Fail(new Error(ErrorCodes.InvalidUserRole, "Invalid user role"));
                 }
 
                 roles = await _userManager.GetRolesAsync(user);
@@ -133,7 +146,7 @@ namespace Wanderling.Infrastructure.Services
             var token = _tokenService.GenerateToken(tokenDto);
 
             var authDto = BuildAuthenticationDto(user, roles, token);
-            return AuthenticationResult.Ok(authDto);
+            return Result<AuthenticationDto>.Ok(authDto);
         }
 
         private AuthenticationDto BuildAuthenticationDto(AppUser user, IEnumerable<string> roles, string token)

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using System.Security.Claims;
 using System.Text;
 using Wanderling.Application.Interfaces;
@@ -35,6 +36,7 @@ namespace Wanderling.Api.DI
             })
              .AddRoles<IdentityRole>()
              .AddEntityFrameworkStores<WanderlingDbContext>()
+             .AddSignInManager<SignInManager<AppUser>>()
              .AddDefaultTokenProviders();
 
             services.AddAuthentication(options =>
@@ -52,19 +54,38 @@ namespace Wanderling.Api.DI
                      ValidateIssuerSigningKey = true,
                      ValidIssuer = configuration["Jwt:Issuer"],
                      ValidAudience = configuration["Jwt:Audience"],
-                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"])),
+                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:SecurityKey"])),
                      RoleClaimType = ClaimTypes.Role
                  };
              });
+
+            services.AddAuthorization();
 
             services.AddScoped<IUserAccauntService, UserAccauntService>();
             services.AddScoped<ITokenService, TokenService>();
             services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
 
-            services.AddAuthorization();
             services.AddControllers();
             services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen();
+            services.AddSwaggerGen(options =>
+            {
+                options.SupportNonNullableReferenceTypes();
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "Wanderling API", Version = "v1" });
+
+                options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Description = "JWT Authorization header using the Bearer scheme."
+                });
+
+                options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+                {
+                    [new OpenApiSecuritySchemeReference("bearer", document)] = new List<string>()
+                });
+            });
+
             return services;
         }
     }

@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wanderling.Infrastructure",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wanderling.Api", "Wanderling.Api\Wanderling.Api.csproj", "{AC364385-09F1-47C9-9EDD-BC25AAEF3E0C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,12 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DF674EF3-5EC5-46F3-9CA8-B82B1280CB9F} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{8428FD6A-6FCE-42CE-B037-227FCF1AE65A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{3D59137B-E375-4DC9-8F83-38747194F0EF} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{AC364385-09F1-47C9-9EDD-BC25AAEF3E0C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F128A1E8-8931-4FCA-A270-71C96FFF5B04}
